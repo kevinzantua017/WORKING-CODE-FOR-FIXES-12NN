@@ -307,34 +307,85 @@
   // ---------- Analytics ----------
   let densityChart, decisionChart, chartsLoaded = false;
 
-  async function loadAnalytics() {
-    if (chartsLoaded) return;
-    try {
-      const res = await fetch(BASE_URL + "/api/analytics", {cache:"no-store"});
-      const rows = await res.json();
+  <script>
+  // ... keep everything else ...
 
-      const labels = rows.map(r => r.minute);
-      const ped = rows.map(r => r.avg_ped);
-      const veh = rows.map(r => r.avg_veh);
-      const go  = rows.map(r => r.go);
-      const stop= rows.map(r => r.stop);
-      const off = rows.map(r => r.off);
+  let densityChart, decisionChart, chartsLoaded = false;
+
+  async function loadAnalytics () {
+    try {
+      const res = await fetch(BASE_URL + "/api/analytics", { cache: "no-store" });
+      const all = await res.json();
+
+      // keep only the last 10 minutes
+      const rows = all.slice(-10);
+
+      // use just HH:MM as the label
+      const labels = rows.map(r => (r.minute || "").slice(-5)); // "2025-09-24 09:51" -> "09:51"
+
+      const ped  = rows.map(r => r.avg_ped);
+      const veh  = rows.map(r => r.avg_veh);
+      const go   = rows.map(r => r.go);
+      const stop = rows.map(r => r.stop);
+      const off  = rows.map(r => r.off);
+
+      // if charts already exist, update instead of recreating
+      if (densityChart) densityChart.destroy();
+      if (decisionChart) decisionChart.destroy();
 
       densityChart = new Chart(document.getElementById('densityChart'), {
         type: 'bar',
-        data: { labels, datasets: [{ label:'Avg Pedestrians', data: ped }, { label:'Avg Vehicles', data: veh }] },
-        options: { responsive: true, maintainAspectRatio: false }
+        data: {
+          labels,
+          datasets: [
+            { label: 'Avg Pedestrians', data: ped },
+            { label: 'Avg Vehicles',    data: veh }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
+            },
+            y: { beginAtZero: true }
+          }
+        }
       });
 
       decisionChart = new Chart(document.getElementById('decisionChart'), {
         type: 'line',
-        data: { labels, datasets: [{ label:'GO', data: go }, { label:'STOP', data: stop }, { label:'OFF', data: off }] },
-        options: { responsive: true, maintainAspectRatio: false }
+        data: {
+          labels,
+          datasets: [
+            { label: 'GO',   data: go },
+            { label: 'STOP', data: stop },
+            { label: 'OFF',  data: off }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
+            },
+            y: { beginAtZero: true, precision: 0 }
+          },
+          elements: { line: { tension: 0 } } // straight lines
+        }
       });
 
       chartsLoaded = true;
-    } catch(e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   }
+
+  // ... keep everything else ...
+</script>
+
 
   // ---------- Archive (select/delete support) ----------
   async function loadArchive(limit=200){
