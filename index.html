@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="style.css"/>
   <!-- tiny transparent favicon to remove 404 noise -->
   <link rel="icon" href="data:,">
+  <style>
+    /* small helpers for the new archive buttons/column */
+    .danger { background:#e63946; color:#fff; border:none; padding:.45rem .75rem; border-radius:.35rem; cursor:pointer; }
+    .danger:hover { filter:brightness(.95); }
+    .table-scroll table th:first-child,
+    .table-scroll table td:first-child { width:44px; text-align:center; }
+  </style>
 </head>
 <body>
 <div class="page-wrapper">
@@ -28,7 +35,7 @@
 
   <!-- DASHBOARD -->
   <section id="dashboard" class="container active">
-    <h2>&#128225; Live Monitoring &mdash; Adamson University San Marcelino St.</h2>
+    <h2>📡 Live Monitoring — Adamson University San Marcelino St.</h2>
 
     <div class="grid-dashboard">
       <div class="card">
@@ -58,7 +65,7 @@
       <div class="card">
         <h3>System Status</h3>
         <p><strong>Status:</strong> <span id="sysStatus" class="status-text offline">OFFLINE</span></p>
-        <p id="metricLine">TL: &mdash; | &#128694; 0 | &#128663; 0 | Nearest: 0.0 m | Speed: 0.0 m/s (0 km/h)</p>
+        <p id="metricLine">TL: — | 🧍 0 | 🚗 0 | Nearest: 0.0 m | Speed: 0.0 m/s (0 km/h)</p>
       </div>
 
       <!-- Boards & Scenario -->
@@ -72,15 +79,15 @@
           <span id="pillEmergency" class="status-text offline">Emergency Vehicle</span>
         </div>
 
-        <p><strong>Current Light:</strong> <span id="curLight" class="light">&mdash;</span></p>
-        <p><strong>Current Decision:</strong> <span id="curDecision">&mdash;</span></p>
+        <p><strong>Current Light:</strong> <span id="curLight" class="light">—</span></p>
+        <p><strong>Current Decision:</strong> <span id="curDecision">—</span></p>
       </div>
     </div>
   </section>
 
   <!-- ANALYTICS -->
   <section id="analytics" class="container">
-    <h2>&#128202; Analytics</h2>
+    <h2>📊 Analytics</h2>
     <div class="grid-2">
       <div class="card" style="height:360px;">
         <h3>Vehicle &amp; Pedestrian Density (last 10 minutes)</h3>
@@ -95,7 +102,7 @@
 
   <!-- SCENARIOS (with toggles) -->
   <section id="scenarios" class="container">
-    <h2>&#128679;&#65039; Scenarios</h2>
+    <h2>🛠️ Scenarios</h2>
 
     <div class="card scenario-card">
       <div class="scenario-header">
@@ -109,12 +116,12 @@
         </div>
       </div>
       <ul>
-        <li><strong>Pedestrian Camera:</strong> 5&ndash;10 students waiting</li>
+        <li><strong>Pedestrian Camera:</strong> 5–10 students waiting</li>
         <li><strong>Vehicle Camera:</strong> Heavy traffic 20+ Vehicles</li>
         <li><strong>Traffic Light:</strong> Red</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Vehicles priority to ease congestion.<br>
-      LED: <em>&ldquo;Vehicles Priority &ndash; Wait to Cross&rdquo;</em></p>
+      LED: <em>“Vehicles Priority – Wait to Cross”</em></p>
     </div>
 
     <div class="card scenario-card">
@@ -130,11 +137,11 @@
       </div>
       <ul>
         <li><strong>Pedestrian Camera:</strong> 30+ Civilians waiting</li>
-        <li><strong>Vehicle Camera:</strong> 0&ndash;5 Vehicles</li>
+        <li><strong>Vehicle Camera:</strong> 0–5 Vehicles</li>
         <li><strong>Traffic Light:</strong> Green</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Prioritize pedestrians (high density, low vehicles).<br>
-      LED: <em>&ldquo;Prepare to Stop &ndash; Pedestrians Crossing&rdquo;</em></p>
+      LED: <em>“Prepare to Stop – Pedestrians Crossing”</em></p>
     </div>
 
     <div class="card scenario-card">
@@ -151,24 +158,30 @@
       <ul>
         <li><strong>Pedestrian Camera:</strong> ~20 waiting</li>
         <li><strong>Vehicle Camera:</strong> Ambulance with siren</li>
-        <li><strong>Traffic Light:</strong> Yellow &rarr; Red</li>
+        <li><strong>Traffic Light:</strong> Yellow → Red</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Override for ambulance right-of-way.<br>
-      LED: <em>&ldquo;Emergency Vehicle Passing &ndash; Please Wait&rdquo;</em></p>
+      LED: <em>“Emergency Vehicle Passing – Please Wait”</em></p>
     </div>
   </section>
 
   <!-- ARCHIVE -->
   <section id="logs" class="container">
-    <h2>&#128194;&#65039; System Logs</h2>
+    <h2>🗂️ System Logs</h2>
     <div style="display:flex; gap:.5rem; margin:.5rem 0;">
       <button onclick="loadArchive()">Refresh</button>
-      <button onclick="clearLogs()" title="Delete all log rows">Clear All</button>
+      <button class="danger" onclick="clearLogs()" title="Delete all log rows">Clear All</button>
+      <button class="danger" onclick="deleteSelected()" title="Delete only the checked rows">Delete Selected</button>
     </div>
     <div class="table-scroll">
       <table>
         <thead>
-          <tr><th>Time</th><th>Event</th><th>Status (Boards)</th></tr>
+          <tr>
+            <th><input id="logSelAll" type="checkbox" onchange="toggleSelectAll(this)"></th>
+            <th>Time</th>
+            <th>Event</th>
+            <th>Status (Boards)</th>
+          </tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -176,7 +189,7 @@
   </section>
 
   <footer>
-    <p>&copy; 2025 Adamson University | AI-Driven LED Board Optimization</p>
+    <p>© 2025 Adamson University | AI-Driven LED Board Optimization</p>
   </footer>
 </div>
 
@@ -200,10 +213,6 @@
   const metricLine  = document.getElementById("metricLine");
   const curLight    = document.getElementById("curLight");
 
-  // Emoji (safe, via Unicode escapes)
-  const WALK = '\u{1F6B6}';  // 🚶
-  const CAR  = '\u{1F697}';  // 🚗
-
   // Pills on dashboard
   const pillVehicle   = document.getElementById("pillVehicle");
   const pillPed       = document.getElementById("pillPed");
@@ -217,6 +226,7 @@
   const togglePed = document.getElementById('togglePed');
   const toggleEmg = document.getElementById('toggleEmg');
 
+  // Local persistent flags for toggles -> pills
   function loadFlags(){
     try { return JSON.parse(localStorage.getItem('scenarioFlags')) || {veh:false, ped:false, emg:false}; }
     catch { return {veh:false, ped:false, emg:false}; }
@@ -225,7 +235,6 @@
 
   function applyFlagsToUI(){
     const f = loadFlags();
-
     if (toggleVeh) toggleVeh.checked = !!f.veh;
     if (togglePed) togglePed.checked = !!f.ped;
     if (toggleEmg) toggleEmg.checked = !!f.emg;
@@ -248,6 +257,7 @@
     f[key] = !!checkbox.checked;
     saveFlags(f);
     applyFlagsToUI();
+    // (optional) POST to backend if needed in future
   }
 
   // ---------- SOCKET + POLL ----------
@@ -268,7 +278,7 @@
 
     const kmh = (Number(s.avg_vehicle_speed_mps)||0) * 3.6;
     metricLine.textContent =
-      `TL: ${(s.tl_color||'—').toUpperCase()} | ${WALK} ${s.ped_count||0} | ${CAR} ${s.veh_count||0} | ` +
+      `TL: ${(s.tl_color||'—').toUpperCase()} | 🧍 ${s.ped_count||0} | 🚗 ${s.veh_count||0} | ` +
       `Nearest: ${Number(s.nearest_vehicle_distance_m||0).toFixed(1)} m | ` +
       `Speed: ${Number(s.avg_vehicle_speed_mps||0).toFixed(1)} m/s (${kmh.toFixed(0)} km/h)`;
 
@@ -300,7 +310,7 @@
   async function loadAnalytics() {
     if (chartsLoaded) return;
     try {
-      const res = await fetch(BASE_URL + "/api/analytics");
+      const res = await fetch(BASE_URL + "/api/analytics", {cache:"no-store"});
       const rows = await res.json();
 
       const labels = rows.map(r => r.minute);
@@ -326,18 +336,23 @@
     } catch(e) { console.error(e); }
   }
 
-  // ---------- Archive ----------
+  // ---------- Archive (select/delete support) ----------
   async function loadArchive(limit=200){
     try {
-      const res = await fetch(BASE_URL + "/api/logs?limit=" + encodeURIComponent(limit));
+      const res = await fetch(BASE_URL + "/api/logs?limit=" + encodeURIComponent(limit), {cache:"no-store"});
       const rows = await res.json();
       const tbody = document.querySelector("#logs tbody");
+      const selAll = document.getElementById("logSelAll");
+      if (selAll) selAll.checked = false;
+
       tbody.innerHTML = "";
       rows.forEach(r => {
         const tr = document.createElement("tr");
         const t = new Date(r.ts * 1000).toLocaleTimeString();
         const boards = r.boards_status || "Veh: ON | Ped-L: ON | Ped-R: ON";
-        tr.innerHTML = `<td>${t}</td>
+        tr.innerHTML = `
+          <td><input type="checkbox" class="logSel" data-id="${r.id}"></td>
+          <td>${t}</td>
           <td>Ped: ${r.ped_count}, Veh: ${r.veh_count}, TL: ${(String(r.tl_color)||'').toUpperCase()}</td>
           <td>${boards}</td>`;
         tbody.appendChild(tr);
@@ -348,9 +363,41 @@
   async function clearLogs(){
     if (!confirm("Clear ALL logs? This cannot be undone.")) return;
     try {
-      await fetch(BASE_URL + "/api/logs/clear", { method:"POST" });
+      await fetch(BASE_URL + "/api/logs/clear", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ all: true })
+      });
       loadArchive();
     } catch(e) { alert("Failed to clear logs."); }
+  }
+
+  async function deleteSelected(){
+    const boxes = Array.from(document.querySelectorAll("#logs .logSel:checked"));
+    if (boxes.length === 0) { alert("No rows selected."); return; }
+    const ids = boxes.map(b => Number(b.dataset.id)).filter(n => Number.isFinite(n));
+    if (ids.length === 0) { alert("No valid ids found."); return; }
+
+    if (!confirm(`Delete ${ids.length} selected entr${ids.length>1?'ies':'y'}?`)) return;
+
+    try {
+      const res = await fetch(BASE_URL + "/api/logs/delete", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ ids })
+      });
+      const j = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j.msg || "Delete failed");
+      loadArchive();
+    } catch (e) {
+      alert("Failed to delete selected rows.");
+      console.error(e);
+    }
+  }
+
+  function toggleSelectAll(master){
+    const boxes = document.querySelectorAll("#logs .logSel");
+    boxes.forEach(b => { b.checked = master.checked; });
   }
 
   // ---------- Tabs ----------
