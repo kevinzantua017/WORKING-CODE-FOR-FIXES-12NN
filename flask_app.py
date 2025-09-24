@@ -161,7 +161,7 @@ def api_status_now():
 
 @app.get("/api/logs")
 def api_logs():
-    limit = int(request.args.get("limit", 100))
+    limit = int(request.args.get("limit", 200))
     rows = _safe_query_rows(
         """
         SELECT id, ts, ped_count, veh_count, tl_color,
@@ -172,6 +172,7 @@ def api_logs():
         """,
         (limit,),
     )
+    # Use current board LED states for the expanded LED-Board Status column
     with _state_lock:
         bveh = latest_status.get("board_veh", "OFF")
         pl   = latest_status.get("board_ped_l", "OFF")
@@ -186,9 +187,9 @@ def api_logs():
             "nearest_vehicle_distance_m": float(r[5]),
             "avg_vehicle_speed_mps": float(r[6]),
             "action": str(r[7]),
-            "board_veh": bveh,
-            "board_ped_l": pl,
-            "board_ped_r": pr,
+            "veh_led": bveh,         # long labels will be rendered client-side
+            "ped_l_led": pl,
+            "ped_r_led": pr,
         }
         for r in rows
     ])
@@ -256,8 +257,14 @@ def api_logs_delete():
 
 @app.post("/api/logs/clear")
 def api_logs_clear():
+    """
+    Wipe logs. Accepts either:
+      - empty body (defaults to clear-all), or
+      - {"all": true}, or
+      - {"older_than_seconds": N}
+    """
     data = request.get_json(silent=True) or {}
-    all_flag = bool(data.get("all"))
+    all_flag = bool(data.get("all", True if not data else False))
     older_than = data.get("older_than_seconds")  # optional
     conn = _db_connect()
     cur = conn.cursor()
@@ -266,6 +273,7 @@ def api_logs_clear():
     elif older_than is not None:
         cur.execute("DELETE FROM events WHERE ts < strftime('%s','now') - ?", (int(older_than),))
     else:
+        conn.close()
         return jsonify({"ok": False, "msg": "provide {all:true} or older_than_seconds"}), 400
     deleted = cur.rowcount
     conn.commit()
