@@ -153,31 +153,44 @@
   </div>
 </div>
 
-<!-- ================= ARCHIVE ================= -->
-<div class="container" id="logs">
-  <h2>🗂️ System Logs</h2>
-
-  <div class="table-actions">
-    <button class="btn" onclick="refreshArchive()">Refresh</button>
-    <button class="btn btn-danger" onclick="clearAllLogs()">Clear All</button>
-    <button class="btn" onclick="deleteSelected()">Delete Selected</button>
-    <label style="margin-left:10px;"><input type="checkbox" class="checkbox" id="checkAll" onclick="toggleAll(this)"> Select All</label>
+<!-- ===== Archive / System Logs ===== -->
+<section id="archive" class="container mt-5">
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="ms-1 mb-0"><i class="bi bi-folder2-open me-2"></i>System Logs</h4>
   </div>
 
-  <div class="table-scroll">
-    <table>
+  <div class="d-flex gap-2 mb-3">
+    <button id="btnDeleteSelected" class="btn btn-outline-danger btn-sm" disabled>
+      Delete Selected
+    </button>
+    <button id="btnClearAll" class="btn btn-danger btn-sm">
+      Clear All
+    </button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" id="logsTable">
       <thead>
         <tr>
-          <th></th>
-          <th>Time</th>
+          <th style="width:36px;">
+            <input type="checkbox" id="selectAll">
+          </th>
+          <th style="width:180px;">Time</th>
           <th>Event</th>
           <th>LED-Board Status</th>
         </tr>
       </thead>
-      <tbody id="archiveBody"></tbody>
+      <tbody id="logsBody">
+        <!-- rows injected by JS -->
+      </tbody>
     </table>
   </div>
-</div>
+
+  <p class="text-muted small mt-2" id="logsHint">
+    Showing the latest items (newest on top). Select rows to delete only those, or use <em>Clear All</em>.
+  </p>
+</section>
+
 
 <footer>
   <p>© 2025 Adamson University | AI-Driven LED Board Optimization</p>
@@ -350,5 +363,152 @@
     if (ok && ok.ok) refreshArchive();
   }
 </script>
+  <script>
+(() => {
+  // ===== Helpers =====
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  function fmtTime(ts) {
+    // ts is unix seconds (float)
+    const d = new Date(ts * 1000);
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+
+  function fmtEvent(row) {
+    // e.g. "Ped: 2, Veh: 1, TL: RED"
+    const tl = String(row.tl_color || '').toUpperCase();
+    return `Ped: ${row.ped_count}, Veh: ${row.veh_count}, TL: ${tl}`;
+  }
+
+  function fmtBoards(row) {
+    // Use row fields if present; otherwise fallback
+    const v  = (row.board_veh    || 'OFF').toUpperCase();
+    const pl = (row.board_ped_l  || 'OFF').toUpperCase();
+    const pr = (row.board_ped_r  || 'OFF').toUpperCase();
+    return `Vehicle: ${v} | Pedestrian-L: ${pl} | Pedestrian-R: ${pr}`;
+  }
+
+  // ===== DOM refs =====
+  const tbody = $("#logsBody");
+  const btnDeleteSel = $("#btnDeleteSelected");
+  const btnClearAll = $("#btnClearAll");
+  const chkAll = $("#selectAll");
+
+  // ===== State =====
+  let currentRows = [];   // {id, ts, ...}
+
+  // ===== UI wiring =====
+  chkAll?.addEventListener('change', () => {
+    const on = chkAll.checked;
+    $$('#logsBody input[type=checkbox].rowSel').forEach(cb => cb.checked = on);
+    updateDeleteButton();
+  });
+
+  btnDeleteSel?.addEventListener('click', async () => {
+    const ids = selectedIds();
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} selected entr${ids.length>1?'ies':'y'}?`)) return;
+
+    try {
+      const r = await fetch('/api/logs/delete', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ids })
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.msg || 'delete failed');
+      await loadLogs(); // refresh view
+      alert(`Deleted ${j.deleted ?? ids.length} entr${(j.deleted ?? 1)>1?'ies':'y'}.`);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete selected.');
+    }
+  });
+
+  btnClearAll?.classList.add('btn-danger');
+  btnClearAll?.addEventListener('click', async () => {
+    if (!confirm('This will delete ALL log entries. Continue?')) return;
+    if (!confirm('Really delete ALL? This cannot be undone.')) return;
+
+    try {
+      const r = await fetch('/api/logs/clear', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ all: true })
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.msg || 'clear failed');
+      await loadLogs();
+      alert(`Cleared ${j.deleted ?? 0} entr${(j.deleted ?? 0)!==1?'ies':'y'}.`);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to clear logs.');
+    }
+  });
+
+  function selectedIds() {
+    return $$('#logsBody input.rowSel:checked').map(cb => Number(cb.dataset.id));
+  }
+
+  function updateDeleteButton() {
+    const any = selectedIds().length > 0;
+    btnDeleteSel.disabled = !any;
+  }
+
+  function renderRows(rows) {
+    tbody.innerHTML = '';
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+
+      const tdSel = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'rowSel form-check-input';
+      cb.dataset.id = row.id;
+      cb.addEventListener('change', updateDeleteButton);
+      tdSel.appendChild(cb);
+
+      const tdTime = document.createElement('td');
+      tdTime.textContent = fmtTime(row.ts);
+
+      const tdEvent = document.createElement('td');
+      tdEvent.textContent = fmtEvent(row);
+
+      const tdBoards = document.createElement('td');
+      tdBoards.textContent = fmtBoards(row);
+
+      tr.appendChild(tdSel);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdEvent);
+      tr.appendChild(tdBoards);
+
+      tbody.appendChild(tr);
+    });
+
+    // reset select-all + delete btn
+    chkAll.checked = false;
+    updateDeleteButton();
+  }
+
+  async function loadLogs() {
+    try {
+      const r = await fetch('/api/logs?limit=500');
+      const rows = await r.json();
+      currentRows = Array.isArray(rows) ? rows : [];
+      // API returns newest first; keep that order
+      renderRows(currentRows);
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-muted">Failed to load logs.</td></tr>`;
+    }
+  }
+
+  // Initial load when the Archive section exists in DOM
+  if (tbody) loadLogs();
+
+})();
+</script>
+
 </body>
 </html>
