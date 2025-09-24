@@ -8,7 +8,7 @@
   <!-- tiny transparent favicon to remove 404 noise -->
   <link rel="icon" href="data:,">
   <style>
-    /* small helpers for the new archive buttons/column */
+    /* small helpers for the archive buttons/column */
     .danger { background:#e63946; color:#fff; border:none; padding:.45rem .75rem; border-radius:.35rem; cursor:pointer; }
     .danger:hover { filter:brightness(.95); }
     .table-scroll table th:first-child,
@@ -35,7 +35,7 @@
 
   <!-- DASHBOARD -->
   <section id="dashboard" class="container active">
-    <h2>📡 Live Monitoring — Adamson University San Marcelino St.</h2>
+    <h2>ðŸ“¡ Live Monitoring â€” Adamson University San Marcelino St.</h2>
 
     <div class="grid-dashboard">
       <div class="card">
@@ -65,7 +65,7 @@
       <div class="card">
         <h3>System Status</h3>
         <p><strong>Status:</strong> <span id="sysStatus" class="status-text offline">OFFLINE</span></p>
-        <p id="metricLine">TL: — | 🧍 0 | 🚗 0 | Nearest: 0.0 m | Speed: 0.0 m/s (0 km/h)</p>
+        <p id="metricLine">TL: â€” | ðŸ§ 0 | ðŸš— 0 | Nearest: 0.0 m | Speed: 0.0 m/s (0 km/h)</p>
       </div>
 
       <!-- Boards & Scenario -->
@@ -79,15 +79,15 @@
           <span id="pillEmergency" class="status-text offline">Emergency Vehicle</span>
         </div>
 
-        <p><strong>Current Light:</strong> <span id="curLight" class="light">—</span></p>
-        <p><strong>Current Decision:</strong> <span id="curDecision">—</span></p>
+        <p><strong>Current Light:</strong> <span id="curLight" class="light">â€”</span></p>
+        <p><strong>Current Decision:</strong> <span id="curDecision">â€”</span></p>
       </div>
     </div>
   </section>
 
   <!-- ANALYTICS -->
   <section id="analytics" class="container">
-    <h2>📊 Analytics</h2>
+    <h2>ðŸ“Š Analytics</h2>
     <div class="grid-2">
       <div class="card" style="height:360px;">
         <h3>Vehicle &amp; Pedestrian Density (last 10 minutes)</h3>
@@ -102,7 +102,7 @@
 
   <!-- SCENARIOS (with toggles) -->
   <section id="scenarios" class="container">
-    <h2>🛠️ Scenarios</h2>
+    <h2>ðŸ› ï¸ Scenarios</h2>
 
     <div class="card scenario-card">
       <div class="scenario-header">
@@ -116,12 +116,12 @@
         </div>
       </div>
       <ul>
-        <li><strong>Pedestrian Camera:</strong> 5–10 students waiting</li>
+        <li><strong>Pedestrian Camera:</strong> 5â€“10 students waiting</li>
         <li><strong>Vehicle Camera:</strong> Heavy traffic 20+ Vehicles</li>
         <li><strong>Traffic Light:</strong> Red</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Vehicles priority to ease congestion.<br>
-      LED: <em>“Vehicles Priority – Wait to Cross”</em></p>
+      LED: <em>â€œVehicles Priority â€“ Wait to Crossâ€</em></p>
     </div>
 
     <div class="card scenario-card">
@@ -137,11 +137,11 @@
       </div>
       <ul>
         <li><strong>Pedestrian Camera:</strong> 30+ Civilians waiting</li>
-        <li><strong>Vehicle Camera:</strong> 0–5 Vehicles</li>
+        <li><strong>Vehicle Camera:</strong> 0â€“5 Vehicles</li>
         <li><strong>Traffic Light:</strong> Green</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Prioritize pedestrians (high density, low vehicles).<br>
-      LED: <em>“Prepare to Stop – Pedestrians Crossing”</em></p>
+      LED: <em>â€œPrepare to Stop â€“ Pedestrians Crossingâ€</em></p>
     </div>
 
     <div class="card scenario-card">
@@ -158,16 +158,16 @@
       <ul>
         <li><strong>Pedestrian Camera:</strong> ~20 waiting</li>
         <li><strong>Vehicle Camera:</strong> Ambulance with siren</li>
-        <li><strong>Traffic Light:</strong> Yellow → Red</li>
+        <li><strong>Traffic Light:</strong> Yellow â†’ Red</li>
       </ul>
       <p><strong>YOLOv8 Action:</strong> Override for ambulance right-of-way.<br>
-      LED: <em>“Emergency Vehicle Passing – Please Wait”</em></p>
+      LED: <em>â€œEmergency Vehicle Passing â€“ Please Waitâ€</em></p>
     </div>
   </section>
 
   <!-- ARCHIVE -->
   <section id="logs" class="container">
-    <h2>🗂️ System Logs</h2>
+    <h2>ðŸ—‚ï¸ System Logs</h2>
     <div style="display:flex; gap:.5rem; margin:.5rem 0;">
       <button onclick="loadArchive()">Refresh</button>
       <button class="danger" onclick="clearLogs()" title="Delete all log rows">Clear All</button>
@@ -189,7 +189,7 @@
   </section>
 
   <footer>
-    <p>© 2025 Adamson University | AI-Driven LED Board Optimization</p>
+    <p>Â© 2025 Adamson University | AI-Driven LED Board Optimization</p>
   </footer>
 </div>
 
@@ -274,16 +274,16 @@
     lastStatusTs = Date.now();
     setOnline(true);
 
-    curDecision.textContent = `${s.action || '—'}${s.scenario ? ' ('+s.scenario+')' : ''}`;
+    curDecision.textContent = `${s.action || 'â€”'}${s.scenario ? ' ('+s.scenario+')' : ''}`;
 
     const kmh = (Number(s.avg_vehicle_speed_mps)||0) * 3.6;
     metricLine.textContent =
-      `TL: ${(s.tl_color||'—').toUpperCase()} | 🧍 ${s.ped_count||0} | 🚗 ${s.veh_count||0} | ` +
+      `TL: ${(s.tl_color||'â€”').toUpperCase()} | ðŸ§ ${s.ped_count||0} | ðŸš— ${s.veh_count||0} | ` +
       `Nearest: ${Number(s.nearest_vehicle_distance_m||0).toFixed(1)} m | ` +
       `Speed: ${Number(s.avg_vehicle_speed_mps||0).toFixed(1)} m/s (${kmh.toFixed(0)} km/h)`;
 
     curLight.className = 'light ' + (s.tl_color || '');
-    curLight.textContent = (s.tl_color || '—').toUpperCase();
+    curLight.textContent = (s.tl_color || 'â€”').toUpperCase();
   }
 
   socket.on("status", paintStatus);
@@ -304,75 +304,87 @@
   setInterval(pollStatus, 2000);
   pollStatus();
 
-  // ---------- Analytics ----------
+  // ---------- Analytics (revised labels: 1–10 min) ----------
   let densityChart, decisionChart, chartsLoaded = false;
 
-  <script>
-  // ... keep everything else ...
+  async function loadAnalytics () {
+    try {
+      const res  = await fetch(BASE_URL + "/api/analytics", { cache:"no-store" });
+      if (!res.ok) return;
+      const all  = await res.json();
 
-  let densityChart, decisionChart, chartsLoaded = false;
+      // keep only the most recent 10 minutes
+      const rows = all.slice(-10);
 
-  // replace your existing loadAnalytics with this:
-async function loadAnalytics() {
-  try {
-    const res  = await fetch(BASE_URL + "/api/analytics", { cache: "no-store" });
-    if (!res.ok) return;
-    const all  = await res.json();
+      // simple labels 1..N minutes (matches rows length)
+      const labels = rows.map((_, i) => `${i + 1} min`);
 
-    const rows   = all.slice(-10);
-    const labels = rows.map(r => (r.minute || "").split(" ").pop() || "");
-    const ped    = rows.map(r => Number(r.avg_ped) || 0);
-    const veh    = rows.map(r => Number(r.avg_veh) || 0);
-    const go     = rows.map(r => Number(r.go)      || 0);
-    const stop   = rows.map(r => Number(r.stop)    || 0);
-    const off    = rows.map(r => Number(r.off)     || 0);
+      const ped  = rows.map(r => Number(r.avg_ped) || 0);
+      const veh  = rows.map(r => Number(r.avg_veh) || 0);
+      const go   = rows.map(r => Number(r.go)      || 0);
+      const stop = rows.map(r => Number(r.stop)    || 0);
+      const off  = rows.map(r => Number(r.off)     || 0);
 
-    if (!densityChart) {
-      densityChart = new Chart(document.getElementById('densityChart'), {
-        type: 'bar',
-        data: { labels, datasets: [
-          { label: 'Avg Pedestrians', data: ped },
-          { label: 'Avg Vehicles',    data: veh }
-        ]},
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          scales: { x: { ticks: { autoSkip:false, maxRotation:0, minRotation:0 } },
-                    y: { beginAtZero:true } }
-        }
-      });
-    } else {
-      densityChart.data.labels = labels;
-      densityChart.data.datasets[0].data = ped;
-      densityChart.data.datasets[1].data = veh;
-      densityChart.update();
+      if (!densityChart) {
+        densityChart = new Chart(document.getElementById('densityChart'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Avg Pedestrians', data: ped },
+              { label: 'Avg Vehicles',    data: veh }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } },
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      } else {
+        densityChart.data.labels = labels;
+        densityChart.data.datasets[0].data = ped;
+        densityChart.data.datasets[1].data = veh;
+        densityChart.update();
+      }
+
+      if (!decisionChart) {
+        decisionChart = new Chart(document.getElementById('decisionChart'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: 'GO',   data: go },
+              { label: 'STOP', data: stop },
+              { label: 'OFF',  data: off }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: { line: { tension: 0 } },
+            scales: {
+              x: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } },
+              y: { beginAtZero: true, precision: 0 }
+            }
+          }
+        });
+      } else {
+        decisionChart.data.labels = labels;
+        decisionChart.data.datasets[0].data = go;
+        decisionChart.data.datasets[1].data = stop;
+        decisionChart.data.datasets[2].data = off;
+        decisionChart.update();
+      }
+
+      chartsLoaded = true;
+    } catch (e) {
+      console.error("loadAnalytics error:", e);
     }
-
-    if (!decisionChart) {
-      decisionChart = new Chart(document.getElementById('decisionChart'), {
-        type: 'line',
-        data: { labels, datasets: [
-          { label: 'GO',   data: go },
-          { label: 'STOP', data: stop },
-          { label: 'OFF',  data: off }
-        ]},
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          elements: { line: { tension: 0 } },
-          scales: { x: { ticks: { autoSkip:false, maxRotation:0, minRotation:0 } },
-                    y: { beginAtZero:true, precision:0 } }
-        }
-      });
-    } else {
-      decisionChart.data.labels = labels;
-      decisionChart.data.datasets[0].data = go;
-      decisionChart.data.datasets[1].data = stop;
-      decisionChart.data.datasets[2].data = off;
-      decisionChart.update();
-    }
-  } catch (err) {
-    console.error("loadAnalytics error:", err);
   }
-}
 
   // ---------- Archive (select/delete support) ----------
   async function loadArchive(limit=200){
