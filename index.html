@@ -312,80 +312,67 @@
 
   let densityChart, decisionChart, chartsLoaded = false;
 
-  async function loadAnalytics () {
-    try {
-      const res = await fetch(BASE_URL + "/api/analytics", { cache: "no-store" });
-      const all = await res.json();
+  // replace your existing loadAnalytics with this:
+async function loadAnalytics() {
+  try {
+    const res  = await fetch(BASE_URL + "/api/analytics", { cache: "no-store" });
+    if (!res.ok) return;
+    const all  = await res.json();
 
-      // keep only the last 10 minutes
-      const rows = all.slice(-10);
+    const rows   = all.slice(-10);
+    const labels = rows.map(r => (r.minute || "").split(" ").pop() || "");
+    const ped    = rows.map(r => Number(r.avg_ped) || 0);
+    const veh    = rows.map(r => Number(r.avg_veh) || 0);
+    const go     = rows.map(r => Number(r.go)      || 0);
+    const stop   = rows.map(r => Number(r.stop)    || 0);
+    const off    = rows.map(r => Number(r.off)     || 0);
 
-      // use just HH:MM as the label
-      const labels = rows.map(r => (r.minute || "").slice(-5)); // "2025-09-24 09:51" -> "09:51"
-
-      const ped  = rows.map(r => r.avg_ped);
-      const veh  = rows.map(r => r.avg_veh);
-      const go   = rows.map(r => r.go);
-      const stop = rows.map(r => r.stop);
-      const off  = rows.map(r => r.off);
-
-      // if charts already exist, update instead of recreating
-      if (densityChart) densityChart.destroy();
-      if (decisionChart) decisionChart.destroy();
-
+    if (!densityChart) {
       densityChart = new Chart(document.getElementById('densityChart'), {
         type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Avg Pedestrians', data: ped },
-            { label: 'Avg Vehicles',    data: veh }
-          ]
-        },
+        data: { labels, datasets: [
+          { label: 'Avg Pedestrians', data: ped },
+          { label: 'Avg Vehicles',    data: veh }
+        ]},
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
-            },
-            y: { beginAtZero: true }
-          }
+          responsive: true, maintainAspectRatio: false,
+          scales: { x: { ticks: { autoSkip:false, maxRotation:0, minRotation:0 } },
+                    y: { beginAtZero:true } }
         }
       });
+    } else {
+      densityChart.data.labels = labels;
+      densityChart.data.datasets[0].data = ped;
+      densityChart.data.datasets[1].data = veh;
+      densityChart.update();
+    }
 
+    if (!decisionChart) {
       decisionChart = new Chart(document.getElementById('decisionChart'), {
         type: 'line',
-        data: {
-          labels,
-          datasets: [
-            { label: 'GO',   data: go },
-            { label: 'STOP', data: stop },
-            { label: 'OFF',  data: off }
-          ]
-        },
+        data: { labels, datasets: [
+          { label: 'GO',   data: go },
+          { label: 'STOP', data: stop },
+          { label: 'OFF',  data: off }
+        ]},
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
-            },
-            y: { beginAtZero: true, precision: 0 }
-          },
-          elements: { line: { tension: 0 } } // straight lines
+          responsive: true, maintainAspectRatio: false,
+          elements: { line: { tension: 0 } },
+          scales: { x: { ticks: { autoSkip:false, maxRotation:0, minRotation:0 } },
+                    y: { beginAtZero:true, precision:0 } }
         }
       });
-
-      chartsLoaded = true;
-    } catch (e) {
-      console.error(e);
+    } else {
+      decisionChart.data.labels = labels;
+      decisionChart.data.datasets[0].data = go;
+      decisionChart.data.datasets[1].data = stop;
+      decisionChart.data.datasets[2].data = off;
+      decisionChart.update();
     }
+  } catch (err) {
+    console.error("loadAnalytics error:", err);
   }
-
-  // ... keep everything else ...
-</script>
-
+}
 
   // ---------- Archive (select/delete support) ----------
   async function loadArchive(limit=200){
